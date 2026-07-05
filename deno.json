@@ -1,0 +1,25 @@
+{
+  "name": "@sandersonstabo/svelte-global-typescript",
+  "version": "0.1.0",
+  "exports": {
+    ".": "./src/mod.ts",
+    "./vite": "./src/vite.ts"
+  },
+  "compilerOptions": {
+    "lib": ["deno.ns", "dom", "dom.iterable", "es2022"]
+  },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@^1.0.15",
+    "@std/fs": "jsr:@std/fs@^1.0.19",
+    "@std/path": "jsr:@std/path@^1.1.2",
+    "magic-string": "npm:magic-string@^0.30.21",
+    "vite": "npm:vite@^8.0.0"
+  },
+  "nodeModulesDir": "auto",
+  "tasks": {
+    "check": "deno check src/mod.ts src/vite.ts src/mod.js src/vite.js",
+    "fmt": "deno fmt",
+    "lint": "deno lint",
+    "test": "deno test -A .tests/"
+  }
+}
