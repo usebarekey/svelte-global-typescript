@@ -37,6 +37,27 @@ The plugin is also available from its area export:
 import { ts } from "svelte-global-typescript/vite";
 ```
 
+### With `svelte-plugin-composer`
+
+When using `svelte-plugin-composer`, add `ts()` before `kit(...)`:
+
+```ts
+import adapter from "@sveltejs/adapter-auto";
+import { ts } from "svelte-global-typescript";
+import { compose, kit } from "svelte-plugin-composer";
+import { defineConfig } from "vite";
+
+export default defineConfig({
+  plugins: compose([
+    ts(),
+    kit({ adapter: adapter() }),
+  ]),
+});
+```
+
+The composer may strip the plugin's `pre` priority, but it preserves the order
+you wrote, so `ts()` still runs before SvelteKit in the final plugin list.
+
 ## What It Does
 
 These components compile with TypeScript mode enabled:
@@ -82,6 +103,13 @@ export default {
   preprocess: vitePreprocess({ script: true }),
 };
 ```
+
+This is also a build-time transform, not an editor transform. The Svelte
+language server reads your source file before Vite plugins run, so editor
+diagnostics may still expect explicit `<script lang="ts">` in files with
+TypeScript syntax. Keep `lang="ts"` where editor feedback matters, or pair this
+with a future editor integration that teaches the language server the same
+default.
 
 ## `.sv` Files
 
