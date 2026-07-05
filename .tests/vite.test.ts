@@ -80,6 +80,32 @@ Deno.test("ts false returns no transform output", async () => {
   assertEquals(transformed, null);
 });
 
+Deno.test("ts can run as a Svelte markup preprocessor", () => {
+  const code = "<script>let count: number = 1;</script>\n<p>{count}</p>";
+  const transformed = preprocess_code(code, "src/lib/counter.svelte");
+
+  assertEquals(
+    transformed,
+    '<script lang="ts">let count: number = 1;</script>\n<p>{count}</p>',
+  );
+});
+
+Deno.test("ts markup preprocessor handles no filename", () => {
+  const code = "<p>{value as string}</p>";
+  const transformed = preprocess_code(code);
+
+  assertEquals(
+    transformed,
+    '<script lang="ts"></script>\n<p>{value as string}</p>',
+  );
+});
+
+Deno.test("ts false has no markup preprocessor", () => {
+  const plugin = ts(false);
+
+  assertEquals(plugin.markup, undefined);
+});
+
 async function transform_code(
   code: string,
   id: string,
@@ -91,6 +117,21 @@ async function transform_code(
   assertExists(transform);
 
   const result = await transform(code, id);
+
+  if (!result) {
+    return null;
+  }
+
+  if (typeof result === "string") {
+    return result;
+  }
+
+  return result.code;
+}
+
+function preprocess_code(code: string, filename?: string): string | null {
+  const plugin = ts();
+  const result = plugin.markup?.({ content: code, filename });
 
   if (!result) {
     return null;

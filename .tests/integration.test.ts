@@ -92,9 +92,11 @@ async function write_fixture(fixture_dir: string): Promise<void> {
     "svelte.config.js",
     [
       'import adapter from "@sveltejs/adapter-static";',
+      'import { ts } from "svelte-global-typescript";',
       "",
       "export default {",
       '  extensions: [".svelte", ".sv"],',
+      "  preprocess: [ts()],",
       "  kit: {",
       "    adapter: adapter(),",
       "  },",
@@ -109,10 +111,9 @@ async function write_fixture(fixture_dir: string): Promise<void> {
     [
       'import { sveltekit } from "@sveltejs/kit/vite";',
       'import { defineConfig } from "vite";',
-      'import { ts } from "svelte-global-typescript";',
       "",
       "export default defineConfig({",
-      "  plugins: [ts(true), sveltekit()],",
+      "  plugins: [sveltekit()],",
       "});",
       "",
     ].join("\n"),

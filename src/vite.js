@@ -1,11 +1,13 @@
 import MagicString from "magic-string";
 
 const component_extensions = [".svelte", ".sv"];
+const composer_config_key = "__svelte_plugin_composer_config";
 const script_tag_name = "<script";
 
 /**
  * Creates a Vite plugin that treats Svelte component scripts as TypeScript by
- * default.
+ * default. The returned object can also be used as a Svelte markup preprocessor
+ * so editor tooling can see the same rewrite before parsing.
  *
  * @example
  * ```js
@@ -20,10 +22,11 @@ const script_tag_name = "<script";
  *
  * @since 0.1.0
  * @param {boolean} [enabled] Whether the plugin should transform Svelte component files. Defaults to `true`.
- * @returns {import("vite").Plugin} A Vite plugin that runs before Svelte's compiler plugin.
+ * @returns {import("vite").Plugin} A Vite plugin and Svelte markup preprocessor.
  */
 export function ts(enabled = true) {
-  return {
+  const preprocessor = make_preprocessor(enabled);
+  const plugin = {
     name: "svelte-global-typescript",
     enforce: "pre",
 
@@ -35,6 +38,23 @@ export function ts(enabled = true) {
       return transform_component(code, id);
     },
   };
+
+  if (!enabled) {
+    return plugin;
+  }
+
+  plugin.markup = preprocessor.markup;
+  Object.defineProperty(plugin, composer_config_key, {
+    enumerable: false,
+    value: {
+      source: "svelte-global-typescript",
+      config: {
+        preprocess: [preprocessor],
+      },
+    },
+  });
+
+  return plugin;
 }
 
 function transform_component(code, id) {
@@ -67,6 +87,22 @@ function transform_component(code, id) {
   };
 }
 
+function make_preprocessor(enabled) {
+  return {
+    name: "svelte-global-typescript",
+    markup({ content, filename }) {
+      if (!enabled || !is_component_filename(filename)) {
+        return undefined;
+      }
+
+      return transform_component(
+        content,
+        filename ?? "component.svelte",
+      ) ?? undefined;
+    },
+  };
+}
+
 function make_source_map(magic, id, code) {
   const map = magic.generateMap({
     hires: true,
@@ -93,7 +129,15 @@ function is_component_request(id) {
     return false;
   }
 
-  return component_extensions.some((extension) => id.endsWith(extension));
+  return is_component_filename(id);
+}
+
+function is_component_filename(filename) {
+  if (!filename) {
+    return true;
+  }
+
+  return component_extensions.some((extension) => filename.endsWith(extension));
 }
 
 function find_script_open_tags(source) {

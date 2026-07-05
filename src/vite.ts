@@ -3,6 +3,7 @@ import type { Plugin, TransformResult } from "vite";
 import MagicString from "magic-string";
 
 const component_extensions = [".svelte", ".sv"] as const;
+const composer_config_key = "__svelte_plugin_composer_config";
 const script_tag_name = "<script";
 
 interface ScriptOpenTag {
@@ -10,9 +11,46 @@ interface ScriptOpenTag {
   insert_position: number;
 }
 
+interface MarkupPreprocessOptions {
+  content: string;
+  filename?: string;
+}
+
+type MarkupPreprocessResult = TransformResult | undefined;
+
+interface SvelteMarkupPreprocessor {
+  name?: string;
+  markup(options: MarkupPreprocessOptions): MarkupPreprocessResult;
+}
+
+interface ComposerConfigContribution {
+  readonly source: string;
+  readonly config: Record<string, unknown>;
+}
+
+/**
+ * Vite plugin that can also be used as a Svelte markup preprocessor.
+ *
+ * @example
+ * ```ts
+ * export default {
+ *   preprocess: [ts()],
+ * };
+ * ```
+ *
+ * @since 0.1.0
+ */
+export type GlobalTypescriptPlugin =
+  & Plugin
+  & Partial<SvelteMarkupPreprocessor>
+  & {
+    readonly [composer_config_key]?: ComposerConfigContribution;
+  };
+
 /**
  * Creates a Vite plugin that treats Svelte component scripts as TypeScript by
- * default.
+ * default. The returned object can also be used as a Svelte markup preprocessor
+ * so editor tooling can see the same rewrite before parsing.
  *
  * @example
  * ```ts
@@ -28,10 +66,11 @@ interface ScriptOpenTag {
  * @since 0.1.0
  * @param enabled - Whether the plugin should transform Svelte component files.
  *   Defaults to `true`.
- * @returns A Vite plugin that runs before Svelte's compiler plugin.
+ * @returns A Vite plugin and Svelte markup preprocessor.
  */
-export function ts(enabled = true): Plugin {
-  return {
+export function ts(enabled = true): GlobalTypescriptPlugin {
+  const preprocessor = make_preprocessor(enabled);
+  const plugin: GlobalTypescriptPlugin = {
     name: "svelte-global-typescript",
     enforce: "pre",
 
@@ -43,6 +82,23 @@ export function ts(enabled = true): Plugin {
       return transform_component(code, id);
     },
   };
+
+  if (!enabled) {
+    return plugin;
+  }
+
+  plugin.markup = preprocessor.markup;
+  Object.defineProperty(plugin, composer_config_key, {
+    enumerable: false,
+    value: {
+      source: "svelte-global-typescript",
+      config: {
+        preprocess: [preprocessor],
+      },
+    },
+  });
+
+  return plugin;
 }
 
 function transform_component(code: string, id: string): TransformResult | null {
@@ -72,6 +128,22 @@ function transform_component(code: string, id: string): TransformResult | null {
   return {
     code: magic.toString(),
     map: make_source_map(magic, id, code),
+  };
+}
+
+function make_preprocessor(enabled: boolean): SvelteMarkupPreprocessor {
+  return {
+    name: "svelte-global-typescript",
+    markup({ content, filename }: MarkupPreprocessOptions) {
+      if (!enabled || !is_component_filename(filename)) {
+        return undefined;
+      }
+
+      return transform_component(
+        content,
+        filename ?? "component.svelte",
+      ) ?? undefined;
+    },
   };
 }
 
@@ -105,7 +177,15 @@ function is_component_request(id: string): boolean {
     return false;
   }
 
-  return component_extensions.some((extension) => id.endsWith(extension));
+  return is_component_filename(id);
+}
+
+function is_component_filename(filename: string | undefined): boolean {
+  if (!filename) {
+    return true;
+  }
+
+  return component_extensions.some((extension) => filename.endsWith(extension));
 }
 
 function find_script_open_tags(source: string): ScriptOpenTag[] {
