@@ -12,7 +12,7 @@ It also supports `.sv` files, so it works neatly with `svelte-sv-extension`.
 ## Install
 
 ```sh
-npm install -D svelte-global-typescript
+pnpm add -D svelte-global-typescript
 ```
 
 ## Setup
@@ -25,7 +25,7 @@ import { defineConfig } from "vite";
 import { ts } from "svelte-global-typescript";
 
 export default defineConfig({
-  plugins: [ts(true), sveltekit()],
+	plugins: [ts(true), sveltekit()],
 });
 ```
 
@@ -47,7 +47,7 @@ Svelte config instead, so add the same `ts()` helper to `svelte.config.js`:
 import { ts } from "svelte-global-typescript";
 
 export default {
-  preprocess: [ts()],
+	preprocess: [ts()],
 };
 ```
 
@@ -63,10 +63,7 @@ import adapter from "@sveltejs/adapter-auto";
 import { ts } from "svelte-global-typescript";
 import { compose_config, kit } from "svelte-plugin-composer";
 
-export default compose_config([
-  ts(),
-  kit({ adapter: adapter() }),
-]);
+export default compose_config([ts(), kit({ adapter: adapter() })]);
 ```
 
 Then keep Vite in external-config mode:
@@ -77,12 +74,9 @@ import { compose, kit } from "svelte-plugin-composer";
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  plugins: compose([
-    ts(),
-    kit(),
-  ], {
-    svelte_config: "external",
-  }),
+	plugins: compose([ts(), kit()], {
+		svelte_config: "external",
+	}),
 });
 ```
 
@@ -133,7 +127,7 @@ usual Svelte preprocessing setup:
 import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
 
 export default {
-  preprocess: vitePreprocess({ script: true }),
+	preprocess: vitePreprocess({ script: true }),
 };
 ```
 
@@ -148,6 +142,6 @@ The plugin transforms `.svelte` and `.sv` files. To make SvelteKit discover
 
 ```js
 export default {
-  extensions: [".svelte", ".sv"],
+	extensions: [".svelte", ".sv"],
 };
 ```
