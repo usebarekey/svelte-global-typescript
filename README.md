@@ -80,10 +80,10 @@ export default defineConfig({
 });
 ```
 
-The composer may strip the plugin's `pre` priority, but it preserves the order
-you wrote, so `ts()` still runs before SvelteKit in the final plugin list. It
-also lets `compose_config(...)` place the same `ts()` preprocessor in
-`svelte.config.js`, which is the part editor tooling reads.
+The composer preserves the order you wrote, so `ts()` still runs before
+SvelteKit in the final plugin list. It also lets `compose_config(...)` place the
+same `ts()` preprocessor in `svelte.config.js`, which is the part editor tooling
+reads.
 
 ## What It Does
 

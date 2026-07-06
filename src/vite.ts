@@ -92,7 +92,6 @@ export function ts(enabled = true): GlobalTypescriptPlugin {
 	const preprocessor = make_preprocessor(enabled);
 	const plugin: GlobalTypescriptPlugin = {
 		name: "svelte-global-typescript",
-		enforce: "pre",
 
 		transform(code, id) {
 			if (!enabled || !is_component_request(id)) {

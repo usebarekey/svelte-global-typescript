@@ -5,6 +5,12 @@ import { describe, expect, test } from "vitest";
 type TransformHook = (code: string, id: string) => TransformResult | Promise<TransformResult>;
 
 describe("ts", () => {
+	test("does not force Vite pre priority", () => {
+		const plugin = ts();
+
+		expect(plugin.enforce).toBeUndefined();
+	});
+
 	test("adds lang ts to plain instance scripts", async () => {
 		const code = `<script>let name: string = "world";</script>\n<h1>{name}</h1>`;
 		const transformed = await transform_code(code, "src/routes/+page.svelte");
