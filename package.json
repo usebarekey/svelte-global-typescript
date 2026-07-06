@@ -1,6 +1,6 @@
 {
 	"name": "svelte-global-typescript",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "Enable TypeScript mode by default in Svelte components.",
 	"license": "BSD-3-Clause",
 	"repository": {
